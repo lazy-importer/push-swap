@@ -8,15 +8,15 @@ import (
 	"strings"
 )
 
-// ErrUnknownInstruction is returned when an instruction is not one of the
-// eleven Push-Swap instructions.
+// ErrUnknownInstruction est renvoyée quand une instruction ne fait pas
+// partie des onze instructions Push-Swap.
 var ErrUnknownInstruction = errors.New("unknown instruction")
 
-// ParseArgs converts the program arguments into integers.
+// ParseArgs convertit les arguments du programme en entiers.
 //
-// The subject allows a single argument containing the whole list
-// (push-swap "2 1 3 6 5 8") as well as one argument per number
-// (push-swap 2 1 3). Every argument is therefore split on spaces.
+// Le sujet accepte un seul argument contenant toute la liste
+// (push-swap "2 1 3 6 5 8") aussi bien qu'un argument par nombre
+// (push-swap 2 1 3). Chaque argument est donc découpé sur les espaces.
 func ParseArgs(args []string) ([]int, error) {
 	if len(args) == 0 {
 		return nil, nil
@@ -38,7 +38,7 @@ func ParseArgs(args []string) ([]int, error) {
 	return nombres, nil
 }
 
-// CheckDuplicates returns an error as soon as a number appears twice.
+// CheckDuplicates renvoie une erreur dès qu'un nombre apparaît deux fois.
 func CheckDuplicates(nombres []int) error {
 	vus := make(map[int]struct{}, len(nombres))
 	for _, n := range nombres {
@@ -50,12 +50,12 @@ func CheckDuplicates(nombres []int) error {
 	return nil
 }
 
-// Ranks replaces every number by its position in ascending order
-// (0 for the smallest, n-1 for the largest). Duplicates are not allowed.
+// Ranks remplace chaque nombre par sa position dans l'ordre croissant
+// (0 pour le plus petit, n-1 pour le plus grand). Pas de doublons.
 //
-// Ranks keep the order: sorting the ranks produces exactly the same
-// instructions as sorting the original numbers, while every rank stays
-// between 0 and n-1.
+// Les rangs gardent l'ordre : trier les rangs produit exactement les
+// mêmes instructions que trier les nombres, avec des valeurs toutes
+// comprises entre 0 et n-1.
 func Ranks(nombres []int) []int {
 	tries := append([]int(nil), nombres...)
 	sort.Ints(tries)

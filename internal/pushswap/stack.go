@@ -1,35 +1,35 @@
-// Package pushswap implements the two stacks, the eleven Push-Swap
-// instructions, argument validation, the sorting strategies and the checker
-// logic shared by the push-swap and checker executables.
+// Package pushswap contient les deux piles, les onze instructions
+// Push-Swap, la validation des arguments et les stratégies de tri,
+// partagés par push-swap et checker.
 package pushswap
 
 import (
-	"bufio"
+	"fmt"
 	"io"
 )
 
-// Stack holds both stacks and every instruction applied so far.
-//
-// The top of each stack is the first element, as required by the subject:
-// the first integer received is the top of stack a.
+// Stack regroupe les deux piles et les instructions appliquées.
+// Le sommet de chaque pile est le premier élément : le premier entier
+// reçu est le sommet de a.
 type Stack struct {
 	A   []int
 	B   []int
 	Ops []string
 }
 
-// New builds a stack a from values, with an empty stack b.
+// New construit la pile a à partir de values, avec b vide.
 func New(values []int) *Stack {
 	a := make([]int, len(values))
 	copy(a, values)
 	return &Stack{A: a}
 }
 
+// log enregistre une instruction dans l'historique.
 func (s *Stack) log(op string) {
 	s.Ops = append(s.Ops, op)
 }
 
-// --- elementary helpers (no logging) ---------------------------------------
+// --- opérations élémentaires (sans enregistrement) -------------------------
 
 func (s *Stack) swapA() {
 	if len(s.A) >= 2 {
@@ -57,15 +57,15 @@ func (s *Stack) rotateB() {
 
 func (s *Stack) reverseRotateA() {
 	if len(s.A) >= 2 {
-		last := len(s.A) - 1
-		s.A = append([]int{s.A[last]}, s.A[:last]...)
+		dernier := len(s.A) - 1
+		s.A = append([]int{s.A[dernier]}, s.A[:dernier]...)
 	}
 }
 
 func (s *Stack) reverseRotateB() {
 	if len(s.B) >= 2 {
-		last := len(s.B) - 1
-		s.B = append([]int{s.B[last]}, s.B[:last]...)
+		dernier := len(s.B) - 1
+		s.B = append([]int{s.B[dernier]}, s.B[:dernier]...)
 	}
 }
 
@@ -83,43 +83,43 @@ func (s *Stack) pushB() {
 	}
 }
 
-// --- public instructions ---------------------------------------------------
+// --- instructions publiques ------------------------------------------------
 
-// Sa swaps the first two elements of a.
+// Sa échange les deux premiers éléments de a.
 func (s *Stack) Sa() { s.swapA(); s.log("sa") }
 
-// Sb swaps the first two elements of b.
+// Sb échange les deux premiers éléments de b.
 func (s *Stack) Sb() { s.swapB(); s.log("sb") }
 
-// Ss executes sa and sb.
+// Ss exécute sa et sb.
 func (s *Stack) Ss() { s.swapA(); s.swapB(); s.log("ss") }
 
-// Pa moves the top of b to the top of a.
+// Pa prend le premier de b et le pose sur a.
 func (s *Stack) Pa() { s.pushA(); s.log("pa") }
 
-// Pb moves the top of a to the top of b.
+// Pb prend le premier de a et le pose sur b.
 func (s *Stack) Pb() { s.pushB(); s.log("pb") }
 
-// Ra shifts a up: the first element becomes the last one.
+// Ra décale a vers le haut : le premier devient le dernier.
 func (s *Stack) Ra() { s.rotateA(); s.log("ra") }
 
-// Rb shifts b up.
+// Rb décale b vers le haut.
 func (s *Stack) Rb() { s.rotateB(); s.log("rb") }
 
-// Rr executes ra and rb.
+// Rr exécute ra et rb.
 func (s *Stack) Rr() { s.rotateA(); s.rotateB(); s.log("rr") }
 
-// Rra shifts a down: the last element becomes the first one.
+// Rra décale a vers le bas : le dernier devient le premier.
 func (s *Stack) Rra() { s.reverseRotateA(); s.log("rra") }
 
-// Rrb shifts b down.
+// Rrb décale b vers le bas.
 func (s *Stack) Rrb() { s.reverseRotateB(); s.log("rrb") }
 
-// Rrr executes rra and rrb.
+// Rrr exécute rra et rrb.
 func (s *Stack) Rrr() { s.reverseRotateA(); s.reverseRotateB(); s.log("rrr") }
 
-// Apply executes one instruction given as text. It returns an error when the
-// instruction does not exist.
+// Apply exécute une instruction donnée sous forme de texte.
+// Renvoie une erreur si l'instruction n'existe pas.
 func (s *Stack) Apply(op string) error {
 	switch op {
 	case "sa":
@@ -150,7 +150,7 @@ func (s *Stack) Apply(op string) error {
 	return nil
 }
 
-// IsSorted reports whether a is sorted in ascending order, top first.
+// IsSorted dit si a est triée en ordre croissant.
 func (s *Stack) IsSorted() bool {
 	for i := 1; i < len(s.A); i++ {
 		if s.A[i-1] > s.A[i] {
@@ -160,55 +160,51 @@ func (s *Stack) IsSorted() bool {
 	return true
 }
 
-// Done reports whether a is sorted and b is empty.
+// Done dit si a est triée et b vide : c'est l'objectif du sujet.
 func (s *Stack) Done() bool {
 	return len(s.B) == 0 && s.IsSorted()
 }
 
-// WriteOps writes the recorded instructions, one per line, to w.
+// WriteOps écrit les instructions enregistrées, une par ligne.
 func (s *Stack) WriteOps(w io.Writer) error {
-	buffered := bufio.NewWriter(w)
 	for _, op := range s.Ops {
-		if _, err := buffered.WriteString(op); err != nil {
-			return err
-		}
-		if err := buffered.WriteByte('\n'); err != nil {
+		if _, err := fmt.Fprintln(w, op); err != nil {
 			return err
 		}
 	}
-	return buffered.Flush()
+	return nil
 }
 
-// rotateATo brings the element at position to the top of a using the shortest
-// path (ra or rra).
+// rotateATo amène l'élément situé à position au sommet de a,
+// par le plus court chemin (ra ou rra).
 func (s *Stack) rotateATo(position int) {
 	if position <= 0 || position >= len(s.A) {
 		return
 	}
 	if position < len(s.A)-position {
-		for i := 0; i < position; i++ {
+		for range position {
 			s.Ra()
 		}
 		return
 	}
-	for i := 0; i < len(s.A)-position; i++ {
+	for range len(s.A) - position {
 		s.Rra()
 	}
 }
 
-// rotateBTo brings the element at position to the top of b using the shortest
-// path (rb or rrb).
+// rotateBTo amène l'élément situé à position au sommet de b,
+// par le plus court chemin (rb ou rrb).
 func (s *Stack) rotateBTo(position int) {
 	if position <= 0 || position >= len(s.B) {
 		return
 	}
 	if position < len(s.B)-position {
-		for i := 0; i < position; i++ {
+		for range position {
 			s.Rb()
 		}
 		return
 	}
-	for i := 0; i < len(s.B)-position; i++ {
+	for range len(s.B) - position {
 		s.Rrb()
 	}
 }

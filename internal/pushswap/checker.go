@@ -1,29 +1,33 @@
 package pushswap
 
 import (
-	"bufio"
 	"io"
 	"strings"
 )
 
-// Check executes the instructions read from r on a copy of numbers and
-// reports whether stack a is sorted and stack b is empty at the end.
-//
-// An unknown or badly formatted instruction makes Check return an error.
+// Check exécute les instructions lues dans r sur une copie de numbers,
+// puis dit si a est triée et b vide à la fin.
+// Une instruction inconnue ou mal formatée renvoie une erreur.
 func Check(numbers []int, r io.Reader) (bool, error) {
 	s := New(numbers)
 
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	// On lit tout, puis on découpe en lignes : une instruction par ligne.
+	contenu, err := io.ReadAll(r)
+	if err != nil {
+		return false, err
+	}
+	lignes := strings.Split(string(contenu), "\n")
 
-	for scanner.Scan() {
-		line := strings.TrimSuffix(scanner.Text(), "\r")
-		if err := s.Apply(line); err != nil {
+	// Le dernier élément est vide quand l'entrée se termine par \n.
+	if len(lignes) > 0 && lignes[len(lignes)-1] == "" {
+		lignes = lignes[:len(lignes)-1]
+	}
+
+	for _, ligne := range lignes {
+		// Une ligne peut se terminer par \r : entrée venue de Windows.
+		if err := s.Apply(strings.TrimSuffix(ligne, "\r")); err != nil {
 			return false, err
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		return false, err
 	}
 
 	return s.Done(), nil

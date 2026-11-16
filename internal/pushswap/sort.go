@@ -2,12 +2,12 @@ package pushswap
 
 import "math"
 
-// Sort sorts stack a in ascending order (smallest at the top) and leaves
-// stack b empty. Stack b is assumed to be empty when Sort is called.
+// Sort trie a en ordre croissant (le plus petit au sommet) et laisse b vide.
+// On suppose b vide au moment de l'appel.
 //
-// Up to maxOptimalSize elements, a breadth-first search returns a provably
-// shortest sequence. Above that, a cheapest-insertion strategy is used up to
-// a moderate size, then the chunk strategy for very large stacks.
+// Jusqu'à maxOptimalSize éléments, un parcours en largeur renvoie la plus
+// courte séquence possible. Au-delà, insertion au moindre coût jusqu'à
+// 1000, puis stratégie par blocs pour les très grandes piles.
 func (s *Stack) Sort() {
 	if s.Done() || len(s.A) < 2 {
 		return
@@ -23,8 +23,8 @@ func (s *Stack) Sort() {
 	}
 }
 
-// sortThree sorts three elements in at most two instructions. Only the
-// relative order of the three values matters.
+// sortThree trie trois éléments en deux instructions au plus.
+// Seul l'ordre relatif des trois valeurs compte.
 func (s *Stack) sortThree() {
 	if len(s.A) < 3 {
 		return
@@ -34,7 +34,7 @@ func (s *Stack) sortThree() {
 
 	switch {
 	case haut < milieu && milieu < bas:
-		// 1 2 3: already sorted.
+		// 1 2 3 : déjà trié.
 	case haut > milieu && milieu < bas && haut < bas:
 		// 2 1 3
 		s.Sa()
@@ -55,13 +55,14 @@ func (s *Stack) sortThree() {
 	}
 }
 
-// sortInsertion keeps the first three elements in a, sorts them, then
-// inserts every element of b at the cheapest position.
+// sortInsertion garde trois éléments dans a, les trie, puis réinsère
+// chaque élément de b au poste le moins cher.
 //
-// After the first three elements are sorted, a is always circularly sorted:
-// reading it from any starting point wraps around in ascending order. The
-// element of b to insert goes just before the smallest value of a that is
-// larger than it, or before the minimum when it is the new maximum.
+// Une fois les trois premiers triés, a est toujours triée de façon
+// circulaire : lue depuis n'importe quel point de départ, elle remonte
+// en ordre croissant puis repart au début. L'élément de b s'insère juste
+// avant la plus petite valeur de a qui lui est supérieure, ou avant le
+// minimum quand il devient le nouveau maximum.
 func (s *Stack) sortInsertion() {
 	for len(s.A) > 3 {
 		s.Pb()
@@ -90,16 +91,15 @@ func (s *Stack) sortInsertion() {
 	s.rotateATo(positionOfMinimum(s.A))
 }
 
-// targetPosition returns the position where valeur must be inserted in the
-// circularly sorted stack a. It runs in O(log n).
+// targetPosition renvoie le poste où insérer valeur dans a, triée de
+// façon circulaire. Complexité : O(log n).
 func targetPosition(a []int, valeur int) int {
 	n := len(a)
 	if n == 0 {
 		return 0
 	}
 
-	// Find the position of the minimum: the array is a sorted sequence
-	// rotated around it.
+	// Position du minimum : le tableau est une suite triée tournée autour.
 	lo, hi := 0, n-1
 	for lo < hi {
 		milieu := (lo + hi) / 2
@@ -111,8 +111,8 @@ func targetPosition(a []int, valeur int) int {
 	}
 	pivot := lo
 
-	// Binary search the first element greater than valeur, reading the array
-	// in logical order starting at the minimum.
+	// Recherche du premier élément supérieur à valeur, en lisant le
+	// tableau dans l'ordre logique qui part du minimum.
 	lo, hi = 0, n
 	for lo < hi {
 		milieu := (lo + hi) / 2
@@ -128,8 +128,8 @@ func targetPosition(a []int, valeur int) int {
 	return (pivot + lo) % n
 }
 
-// rotationPlan chooses the direction (up = ra/rb, down = rra/rrb) and the
-// number of rotations needed to bring position to the top.
+// rotationPlan choisit la direction (up = ra/rb, down = rra/rrb) et le
+// nombre de rotations pour amener position au sommet.
 func rotationPlan(position, length int) (up bool, cost int) {
 	if position <= length-position {
 		return true, position
@@ -137,9 +137,9 @@ func rotationPlan(position, length int) (up bool, cost int) {
 	return false, length - position
 }
 
-// combinedRotationCost is the number of instructions needed to rotate both
-// stacks. When both go in the same direction, rr or rrr does both at once,
-// so the cost is the maximum instead of the sum.
+// combinedRotationCost compte les instructions pour tourner les deux
+// piles. Quand elles tournent dans le même sens, rr ou rrr fait les deux
+// d'un coup : le coût est le maximum, pas la somme.
 func combinedRotationCost(aPosition, aLength, bPosition, bLength int) int {
 	aUp, aCost := rotationPlan(aPosition, aLength)
 	bUp, bCost := rotationPlan(bPosition, bLength)
@@ -152,8 +152,8 @@ func combinedRotationCost(aPosition, aLength, bPosition, bLength int) int {
 	return bCost
 }
 
-// rotateAAndBTo brings both requested positions to the top, using rr/rrr
-// when the rotation directions match.
+// rotateAAndBTo amène les deux postes demandés au sommet, en utilisant
+// rr ou rrr quand les directions de rotation sont les mêmes.
 func (s *Stack) rotateAAndBTo(aPosition, bPosition int) {
 	aUp, aCost := rotationPlan(aPosition, len(s.A))
 	bUp, bCost := rotationPlan(bPosition, len(s.B))
@@ -168,7 +168,7 @@ func (s *Stack) rotateAAndBTo(aPosition, bPosition int) {
 	if bCost < commun {
 		commun = bCost
 	}
-	for i := 0; i < commun; i++ {
+	for range commun {
 		if aUp {
 			s.Rr()
 		} else {
@@ -191,16 +191,16 @@ func (s *Stack) rotateAAndBTo(aPosition, bPosition int) {
 	}
 }
 
-// sortChunks is the general strategy.
+// sortChunks est la stratégie générale.
 //
-// Phase 1: the ranks are split into about sqrt(n) blocks. Blocks are pushed
-// to b from the smallest ranks to the largest. Inside a block, the lower half
-// is sent to the bottom of b with rb, so b ends up almost ordered with the
-// largest values on top.
+// Phase 1 : les rangs sont découpés en environ sqrt(n) blocs, poussés
+// vers b du plus petit rang au plus grand. Dans un bloc, la moitié basse
+// part au fond de b avec rb : b se retrouve presque ordonnée, les plus
+// grandes valeurs au sommet.
 //
-// Phase 2: the maximum of b is brought to the top by the shortest path and
-// pushed back on a. Since the maximum is usually near the top, this phase is
-// cheap, and a is built in ascending order.
+// Phase 2 : le maximum de b est amené au sommet par le plus court chemin
+// puis reposé sur a. Le maximum est souvent proche du sommet, donc cette
+// phase est peu coûteuse, et a se reconstruit en ordre croissant.
 func (s *Stack) sortChunks() {
 	n := len(s.A)
 	rankOf := make(map[int]int, n)
@@ -260,6 +260,7 @@ func (s *Stack) sortChunks() {
 	}
 }
 
+// positionOfMinimum renvoie la position du plus petit élément de pile.
 func positionOfMinimum(pile []int) int {
 	position := 0
 	for i := 1; i < len(pile); i++ {
@@ -270,6 +271,7 @@ func positionOfMinimum(pile []int) int {
 	return position
 }
 
+// positionOfMaximum renvoie la position du plus grand élément de pile.
 func positionOfMaximum(pile []int) int {
 	position := 0
 	for i := 1; i < len(pile); i++ {

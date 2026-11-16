@@ -1,8 +1,9 @@
 package pushswap
 
-// maxOptimalSize is the largest stack for which the exact shortest solution
-// is searched. The whole state space is small enough to explore with a
-// breadth-first search, which guarantees a minimal number of instructions.
+// maxOptimalSize est la plus grande taille de pile pour laquelle on
+// cherche la solution exacte. L'espace d'états reste assez petit pour
+// être exploré en largeur, ce qui garantit le nombre minimal
+// d'instructions.
 const maxOptimalSize = 7
 
 var allInstructions = [...]string{
@@ -11,18 +12,19 @@ var allInstructions = [...]string{
 	"rra", "rrb", "rrr",
 }
 
-// searchNode is one state visited by the breadth-first search.
+// searchNode est un état visité par le parcours en largeur.
 type searchNode struct {
 	a, b   []int
 	parent int
 	op     string
 }
 
-// sortOptimal finds a shortest sequence of instructions with a breadth-first
-// search over all the states of the two stacks, then replays it.
+// sortOptimal trouve une plus courte séquence d'instructions par un
+// parcours en largeur de tous les états des deux piles, puis la rejoue.
 //
-// The search is done on ranks so that a state can be encoded compactly.
-// Ranks preserve the order, so the sequence is valid for the real values too.
+// La recherche se fait sur les rangs : un état se code de façon compacte
+// et les rangs gardent l'ordre, donc la séquence est valable pour les
+// valeurs réelles aussi.
 func (s *Stack) sortOptimal() {
 	if len(s.A) == 0 {
 		return
@@ -42,7 +44,7 @@ func (s *Stack) sortOptimal() {
 		for _, op := range allInstructions {
 			nextA, nextB := applyRanked(current.a, current.b, op)
 			cle := stateKey(nextA, nextB)
-			if _, already := vus[cle]; already {
+			if _, dejaVu := vus[cle]; dejaVu {
 				continue
 			}
 			vus[cle] = struct{}{}
@@ -56,8 +58,8 @@ func (s *Stack) sortOptimal() {
 	}
 }
 
-// replayOptimal applies the instructions found by the search, from the first
-// move to the last, and records them in the stack.
+// replayOptimal rejoue les instructions trouvées, de la première à la
+// dernière, et les enregistre dans la pile.
 func replayOptimal(s *Stack, nodes []searchNode, last int) {
 	var instructions []string
 	for i := last; nodes[i].parent >= 0; i = nodes[i].parent {
@@ -68,8 +70,9 @@ func replayOptimal(s *Stack, nodes []searchNode, last int) {
 	}
 }
 
-// stateKey encodes a state as a string. Ranks are smaller than 256 for every
-// size handled by sortOptimal; 0xFF separates the two stacks.
+// stateKey code un état sous forme de chaîne. Les rangs sont plus petits
+// que 256 pour toutes les tailles traitées par sortOptimal ; 0xFF sépare
+// les deux piles.
 func stateKey(a, b []int) string {
 	buffer := make([]byte, 0, len(a)+len(b)+1)
 	for _, valeur := range a {
@@ -82,6 +85,8 @@ func stateKey(a, b []int) string {
 	return string(buffer)
 }
 
+// strictlySorted dit si a est triée strictement (aucun doublon possible
+// ici : les rangs sont tous différents).
 func strictlySorted(a []int) bool {
 	for i := 1; i < len(a); i++ {
 		if a[i-1] >= a[i] {
@@ -91,8 +96,8 @@ func strictlySorted(a []int) bool {
 	return true
 }
 
-// applyRanked returns a new state after applying op. It never modifies its
-// arguments.
+// applyRanked renvoie le nouvel état après l'instruction op, sans jamais
+// modifier ses arguments.
 func applyRanked(a, b []int, op string) ([]int, []int) {
 	nextA := append([]int(nil), a...)
 	nextB := append([]int(nil), b...)
@@ -110,8 +115,8 @@ func applyRanked(a, b []int, op string) ([]int, []int) {
 	}
 	rotateDown := func(pile []int) []int {
 		if len(pile) >= 2 {
-			last := len(pile) - 1
-			return append([]int{pile[last]}, pile[:last]...)
+			dernier := len(pile) - 1
+			return append([]int{pile[dernier]}, pile[:dernier]...)
 		}
 		return pile
 	}
