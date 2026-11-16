@@ -1,10 +1,5 @@
 package pushswap
 
-// Sort trie a en ordre croissant (le plus petit au sommet) et laisse b vide.
-// On suppose b vide au moment de l'appel.
-//
-// Stratégie : garder trois éléments dans a, les trier, puis réinsérer
-// chaque élément de b au poste le moins cher.
 func (s *Stack) Sort() {
 	if s.Done() || len(s.A) < 2 {
 		return

@@ -1,6 +1,3 @@
-// Package pushswap contient les deux piles, les onze instructions
-// Push-Swap, la validation des arguments et les stratégies de tri,
-// partagés par push-swap et checker.
 package pushswap
 
 import (
