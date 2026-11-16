@@ -1,26 +1,15 @@
 package pushswap
 
-import "math"
-
 // Sort trie a en ordre croissant (le plus petit au sommet) et laisse b vide.
 // On suppose b vide au moment de l'appel.
 //
-// Jusqu'à maxOptimalSize éléments, un parcours en largeur renvoie la plus
-// courte séquence possible. Au-delà, insertion au moindre coût jusqu'à
-// 1000, puis stratégie par blocs pour les très grandes piles.
+// Stratégie : garder trois éléments dans a, les trier, puis réinsérer
+// chaque élément de b au poste le moins cher.
 func (s *Stack) Sort() {
 	if s.Done() || len(s.A) < 2 {
 		return
 	}
-
-	switch n := len(s.A); {
-	case n <= maxOptimalSize:
-		s.sortOptimal()
-	case n <= 1000:
-		s.sortInsertion()
-	default:
-		s.sortChunks()
-	}
+	s.sortInsertion()
 }
 
 // sortThree trie trois éléments en deux instructions au plus.
@@ -55,8 +44,8 @@ func (s *Stack) sortThree() {
 	}
 }
 
-// sortInsertion garde trois éléments dans a, les trie, puis réinsère
-// chaque élément de b au poste le moins cher.
+// sortInsertion garde les trois premiers éléments dans a, les trie, puis
+// insère chaque élément de b au poste le moins cher.
 //
 // Une fois les trois premiers triés, a est toujours triée de façon
 // circulaire : lue depuis n'importe quel point de départ, elle remonte
@@ -191,91 +180,11 @@ func (s *Stack) rotateAAndBTo(aPosition, bPosition int) {
 	}
 }
 
-// sortChunks est la stratégie générale.
-//
-// Phase 1 : les rangs sont découpés en environ sqrt(n) blocs, poussés
-// vers b du plus petit rang au plus grand. Dans un bloc, la moitié basse
-// part au fond de b avec rb : b se retrouve presque ordonnée, les plus
-// grandes valeurs au sommet.
-//
-// Phase 2 : le maximum de b est amené au sommet par le plus court chemin
-// puis reposé sur a. Le maximum est souvent proche du sommet, donc cette
-// phase est peu coûteuse, et a se reconstruit en ordre croissant.
-func (s *Stack) sortChunks() {
-	n := len(s.A)
-	rankOf := make(map[int]int, n)
-	for i, rang := range Ranks(s.A) {
-		rankOf[s.A[i]] = rang
-	}
-
-	nbBlocs := int(math.Sqrt(float64(n)))
-	if nbBlocs < 2 {
-		nbBlocs = 2
-	}
-	taille := (n + nbBlocs - 1) / nbBlocs
-
-	for lo := 0; lo < n; lo += taille {
-		hi := lo + taille
-		if hi > n {
-			hi = n
-		}
-		milieu := (lo + hi) / 2
-
-		for {
-			position := -1
-			meilleureDistance := len(s.A) + 1
-
-			for i, valeur := range s.A {
-				rang := rankOf[valeur]
-				if rang < lo || rang >= hi {
-					continue
-				}
-				distance := i
-				if len(s.A)-i < distance {
-					distance = len(s.A) - i
-				}
-				if distance < meilleureDistance {
-					meilleureDistance = distance
-					position = i
-				}
-			}
-
-			if position < 0 {
-				break
-			}
-
-			s.rotateATo(position)
-			valeur := s.A[0]
-			s.Pb()
-			if rankOf[valeur] < milieu && len(s.B) > 1 {
-				s.Rb()
-			}
-		}
-	}
-
-	for len(s.B) > 0 {
-		position := positionOfMaximum(s.B)
-		s.rotateBTo(position)
-		s.Pa()
-	}
-}
-
 // positionOfMinimum renvoie la position du plus petit élément de pile.
 func positionOfMinimum(pile []int) int {
 	position := 0
 	for i := 1; i < len(pile); i++ {
 		if pile[i] < pile[position] {
-			position = i
-		}
-	}
-	return position
-}
-
-// positionOfMaximum renvoie la position du plus grand élément de pile.
-func positionOfMaximum(pile []int) int {
-	position := 0
-	for i := 1; i < len(pile); i++ {
-		if pile[i] > pile[position] {
 			position = i
 		}
 	}

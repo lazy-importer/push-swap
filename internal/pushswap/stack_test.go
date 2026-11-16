@@ -48,7 +48,10 @@ func TestInstructions(t *testing.T) {
 }
 
 func TestInstructionsOnSmallStacks(t *testing.T) {
-	for _, op := range allInstructions {
+	for _, op := range []string{
+		"sa", "sb", "ss", "pa", "pb",
+		"ra", "rb", "rr", "rra", "rrb", "rrr",
+	} {
 		s := &Stack{A: []int{42}}
 		if err := s.Apply(op); err != nil {
 			t.Fatalf("Apply(%q) : %v", op, err)

@@ -63,9 +63,12 @@ func TestCheckDoesNotModifyInput(t *testing.T) {
 }
 
 func TestCheckEveryInstruction(t *testing.T) {
-	// Each instruction, applied once, must be accepted by the checker even
-	// when it has no effect on a two-element stack.
-	for _, op := range allInstructions {
+	// Chaque instruction, appliquée une fois, doit être acceptée par le
+	// checker même sans effet sur une pile de deux éléments.
+	for _, op := range []string{
+		"sa", "sb", "ss", "pa", "pb",
+		"ra", "rb", "rr", "rra", "rrb", "rrr",
+	} {
 		if _, err := Check([]int{1, 2}, strings.NewReader(op+"\n")); err != nil {
 			t.Errorf("Check a refusé %q : %v", op, err)
 		}

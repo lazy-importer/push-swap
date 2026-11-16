@@ -3,7 +3,6 @@ package pushswap
 import (
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -48,26 +47,4 @@ func CheckDuplicates(nombres []int) error {
 		vus[n] = struct{}{}
 	}
 	return nil
-}
-
-// Ranks remplace chaque nombre par sa position dans l'ordre croissant
-// (0 pour le plus petit, n-1 pour le plus grand). Pas de doublons.
-//
-// Les rangs gardent l'ordre : trier les rangs produit exactement les
-// mêmes instructions que trier les nombres, avec des valeurs toutes
-// comprises entre 0 et n-1.
-func Ranks(nombres []int) []int {
-	tries := append([]int(nil), nombres...)
-	sort.Ints(tries)
-
-	rangDe := make(map[int]int, len(tries))
-	for rang, valeur := range tries {
-		rangDe[valeur] = rang
-	}
-
-	rangs := make([]int, len(nombres))
-	for i, valeur := range nombres {
-		rangs[i] = rangDe[valeur]
-	}
-	return rangs
 }

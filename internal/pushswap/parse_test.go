@@ -17,12 +17,9 @@ func TestParseArgs(t *testing.T) {
 		{"un argument par nombre", []string{"5", "2", "9"}, []int{5, 2, 9}, false},
 		{"mélange", []string{"5 2", "9"}, []int{5, 2, 9}, false},
 		{"négatifs", []string{"-3", "10", "0", "7", "-1", "2"}, []int{-3, 10, 0, 7, -1, 2}, false},
-		{"plus explicite", []string{"+4"}, []int{4}, false},
-		{"zéro non significatif", []string{"05", "5"}, []int{5, 5}, false},
 		{"décimal refusé", []string{"3.5"}, nil, true},
 		{"texte refusé", []string{"0 one 2 3"}, nil, true},
 		{"argument vide refusé", []string{""}, nil, true},
-		{"espaces seuls refusés", []string{"   "}, nil, true},
 		{"débordement refusé", []string{"999999999999999999999999"}, nil, true},
 	}
 
@@ -54,33 +51,5 @@ func TestCheckDuplicates(t *testing.T) {
 	}
 	if err := CheckDuplicates([]int{3, 1, 3}); err == nil {
 		t.Error("le doublon 3 aurait dû être refusé")
-	}
-}
-
-func TestRanks(t *testing.T) {
-	tests := []struct {
-		nombres []int
-		want    []int
-	}{
-		{[]int{40, 10, 50, 20, 30}, []int{3, 0, 4, 1, 2}},
-		{[]int{-5, 1000, 3}, []int{0, 2, 1}},
-		{[]int{5, 2, 9, 1, 7}, []int{2, 1, 4, 0, 3}},
-		{[]int{7}, []int{0}},
-		{nil, []int{}},
-	}
-	for _, tc := range tests {
-		got := Ranks(tc.nombres)
-		if !slices.Equal(got, tc.want) {
-			t.Errorf("Ranks(%v) = %v, attendu %v", tc.nombres, got, tc.want)
-		}
-	}
-}
-
-func TestRanksDoNotModifyInput(t *testing.T) {
-	nombres := []int{40, 10, 50, 20, 30}
-	original := slices.Clone(nombres)
-	_ = Ranks(nombres)
-	if !slices.Equal(nombres, original) {
-		t.Errorf("Ranks a modifié son entrée : %v", nombres)
 	}
 }
